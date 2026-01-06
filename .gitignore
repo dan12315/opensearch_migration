@@ -27,5 +27,5 @@ kafka/
 
 # Logstash runtime (keep only config)
 logstash/logstash-*/
-logstash/*/
+logstash/*.tar.gz
 !logstash/es-migration-batch.conf
