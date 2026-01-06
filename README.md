@@ -66,7 +66,7 @@ source_helper = OpenSearchMigrationHelper(SOURCE_ES, auth=auth)
 target_helper = OpenSearchMigrationHelper(TARGET_ES, aws_region=aws_region, auth=auth)
 ```
 
-### 2. (Optional) Logstash Configuration
+### 3. (Optional) Logstash Configuration
 
 - Update Logstash configuration template at `./logstash/es-migration-batch.conf`:
 - Refer to official document : https://www.elastic.co/guide/en/logstash/7.10/config-examples.html 
