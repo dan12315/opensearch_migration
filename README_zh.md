@@ -65,6 +65,7 @@ LS_HOME = "./logstash/logstash-7.10.2"
 # 迁移设置
 TIMESTAMP_FIELD = "recent_view_timestamp"
 SNAPSHOT_REPO = "migration_assistant_repo"
+INDEX_NAME = "*"
 
 # 文件路径
 LOG_FILE = "./logs/migration.log"
