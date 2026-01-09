@@ -14,13 +14,13 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from config import TIMESTAMP_FIELD, SNAPSHOT_REPO, PROGRESS_FILE, LOG_FILE
+from config import TIMESTAMP_FIELD, SNAPSHOT_REPO, PROGRESS_FILE, LOG_FILE, INDEX_NAME
 
 
 class OpenSearchMigrationWorkflowHelper:
     def __init__(self, source_helper, target_helper, logstash_helper, 
                  timestamp_field=TIMESTAMP_FIELD, snapshot_repo=SNAPSHOT_REPO, 
-                 progress_file=PROGRESS_FILE, log_file=LOG_FILE):
+                 progress_file=PROGRESS_FILE, log_file=LOG_FILE, index_name=INDEX_NAME):
         self.source_helper = source_helper
         self.target_helper = target_helper
         self.timestamp_field = timestamp_field
@@ -28,6 +28,7 @@ class OpenSearchMigrationWorkflowHelper:
         self.logstash_helper = logstash_helper
         self.progress_file = progress_file
         self.log_file = log_file
+        self.index_name = index_name
 
     def _log(self, msg):
         """Log message to console and file with timestamp."""
@@ -52,7 +53,7 @@ class OpenSearchMigrationWorkflowHelper:
     
     def get_gap_minutes(self, start_time):
         """Get minutes gap between start_time and source cluster latest. Returns (gap, latest_ts)."""
-        source_latest = self.source_helper.get_latest_timestamp(self.timestamp_field)
+        source_latest = self.source_helper.get_latest_timestamp(self.timestamp_field, self.index_name)
         gap_minutes = self._time_diff_minutes(start_time, source_latest)
         return gap_minutes, source_latest
     
@@ -90,10 +91,10 @@ class OpenSearchMigrationWorkflowHelper:
                 self._log(f"Using source cluster snapshot time as start point: {start_time}")
             else:
                 self._log("Source cluster snapshot time not found, trying to get target cluster latest data time...")
-                start_time = self.target_helper.get_latest_timestamp(self.timestamp_field)
+                start_time = self.target_helper.get_latest_timestamp(self.timestamp_field,self.index_name)
                 if not start_time:
                     self._log("Target cluster has no data, using source cluster earliest time")
-                    start_time = self.source_helper.get_earliest_timestamp(self.timestamp_field)
+                    start_time = self.source_helper.get_earliest_timestamp(self.timestamp_field, self.index_name)
                     if not start_time:
                         self._log("Error: Unable to get any timestamp, migration paused")
                         sys.exit(1)
