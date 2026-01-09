@@ -5,8 +5,8 @@ All modules import settings from this file.
 """
 
 # Elasticsearch/OpenSearch Endpoints
-SOURCE_ES = "http://10.0.49.245:9200"
-TARGET_ES = "https://vpc-testupgrade2-uckxkgkacx2nhfr6fi26ps4qcq.ap-southeast-1.es.amazonaws.com:443"
+SOURCE_ES = "http://10.0.xx.xx:9200"
+TARGET_ES = "https://xxxxx.ap-southeast-1.es.amazonaws.com:443"
 
 # Logstash Configuration
 TEMPLATE_PATH = "./logstash/es-migration-batch.conf"
@@ -16,7 +16,7 @@ LS_HOME = "./logstash/logstash-7.10.2"
 # Migration Settings
 TIMESTAMP_FIELD = "recent_view_timestamp"
 SNAPSHOT_REPO = "migration_assistant_repo"
-INDEX_NAME = "user_2,user"
+INDEX_NAME = "*" # Use comma to separate multiple indices, e.g., "index1,index2"
 
 # File Paths
 LOG_FILE = "./logs/migration.log"
