@@ -11,10 +11,15 @@ A robust Python-based tool for migrating data from Elasticsearch to OpenSearch u
 
 ## Architecture
 
-The tool consists of two main components:
+The tool consists of the following modules:
 
-1. **OpenSearchMigrationHelper**: Handles snapshot operations and cluster management
-2. **LogStashHelper**: Manages Logstash-based incremental data transfer
+| Module | Description |
+|--------|-------------|
+| `config.py` | Centralized configuration for all settings |
+| `opensearch_helper.py` | OpenSearch cluster connection and data query |
+| `logstash_helper.py` | Logstash configuration and incremental sync execution |
+| `migration_workflow_helper.py` | Migration workflow control and progress management |
+| `main.py` | Main entry point |
 
 ## Prerequisites
 
@@ -45,21 +50,31 @@ pip install -r requirements.txt
 
 ### 2. Script Configuration
 
-Edit the configuration in `opensearch_incremental_migration_v2.py`:
+Edit the configuration in `config.py`:
 
 ```python
+# Elasticsearch/OpenSearch Endpoints
+SOURCE_ES = "http://10.0.xxx.xxx:9200"
+TARGET_ES = "https://xxxxx.ap-southeast-1.es.amazonaws.com:443"
+
+# Logstash Configuration
 TEMPLATE_PATH = "./logstash/es-migration-batch.conf"
 JAVA_HOME = "/usr/lib/jvm/java-11-amazon-corretto"
 LS_HOME = "./logstash/logstash-7.10.2"
-LOG_FILE = "./logs/migration.log"
-PROGRESS_FILE = "./logs/.snapshot_migration_progress"
-SOURCE_ES = "http://10.0.xxx.xxx:9200"
-TARGET_ES = "https://xxxxx.ap-southeast-1.es.amazonaws.com:443"
+
+# Migration Settings
 TIMESTAMP_FIELD = "recent_view_timestamp"
 SNAPSHOT_REPO = "migration_assistant_repo"
+
+# File Paths
+LOG_FILE = "./logs/migration.log"
+PROGRESS_FILE = "./logs/.snapshot_migration_progress"
+
+# AWS Settings
+AWS_DEFAULT_REGION = "ap-southeast-1"
 ```
 
-(Optional) Edit OpenSearch connection auth method in `opensearch_incremental_migration_v2.py`:
+(Optional) Edit OpenSearch connection auth method in `main.py`:
 
 ```python
 source_helper = OpenSearchMigrationHelper(SOURCE_ES, auth=auth)
@@ -68,64 +83,67 @@ target_helper = OpenSearchMigrationHelper(TARGET_ES, aws_region=aws_region, auth
 
 ### 3. (Optional) Logstash Configuration
 
-- Update Logstash configuration template at `./logstash/es-migration-batch.conf`:
-- Refer to official document : https://www.elastic.co/guide/en/logstash/7.10/config-examples.html 
+- Update Logstash configuration template at `./logstash/es-migration-batch.conf`
+- Refer to official document: https://www.elastic.co/guide/en/logstash/7.10/config-examples.html 
 
 ## Usage
 
 ### Direct Execution
 
 ```bash
-python opensearch_incremental_migration_v2.py
+python main.py
 ```
 
 ### Programmatic Usage
 
 ```python
-from opensearch_incremental_migration_v2 import (
-    OpenSearchMigrationHelper,
-    LogStashHelper,
-    OpenSearchMigrationWorkflowHelper
+from config import (
+    SOURCE_ES, TARGET_ES, TIMESTAMP_FIELD, SNAPSHOT_REPO, PROGRESS_FILE, LOG_FILE
 )
+from opensearch_helper import OpenSearchMigrationHelper
+from logstash_helper import LogStashHelper
+from migration_workflow_helper import OpenSearchMigrationWorkflowHelper
 
 # Initialize helpers
-aws_region = os.environ.get('AWS_DEFAULT_REGION', 'ap-southeast-1')
 source_helper = OpenSearchMigrationHelper(SOURCE_ES)
-target_helper = OpenSearchMigrationHelper(TARGET_ES, aws_region=aws_region)
+target_helper = OpenSearchMigrationHelper(TARGET_ES, aws_region='ap-southeast-1')
 logstash_helper = LogStashHelper()
 migration_workflow_helper = OpenSearchMigrationWorkflowHelper(
     source_helper=source_helper,
     target_helper=target_helper,
-    logstash_helper=logstash_helper,
-    snapshot_repo=SNAPSHOT_REPO,
-    timestamp_field=TIMESTAMP_FIELD,
-    progress_file=PROGRESS_FILE
+    logstash_helper=logstash_helper
 )
 
-# start migrate
+# Start migration
 migration_workflow_helper.run_migration()
 ```
 
 ### Migration Process
 
 1. **Baseline Detection**: Automatically finds migration starting point from snapshots or target cluster
-2. **User Confirmation**: Prompts to stop writes to source cluster
-3. **Incremental Sync**: Syncs remaining data using Logstash with automatic batching
-4. **Progress Tracking**: Saves progress to resume interrupted migrations
-
+2. **User Confirmation**: Prompts to confirm start time before migration
+3. **Incremental Sync**: Syncs data using Logstash with automatic batching
+4. **Near Real-time**: When gap <= 5 min, prompts to stop writes for final cutover
+5. **Progress Tracking**: Saves progress to resume interrupted migrations
 
 ## File Structure
 
 ```
 opensearch_migration/
-├── opensearch_incremental_migration_v2.py        # Main migration script
-├── README.md                                     # This file
+├── config.py                          # Centralized configuration
+├── opensearch_helper.py               # OpenSearch client helper
+├── logstash_helper.py                 # Logstash execution helper
+├── migration_workflow_helper.py       # Migration workflow control
+├── main.py                            # Main entry point
+├── requirements.txt                   # Python dependencies
+├── README.md                          # English documentation
+├── README_zh.md                       # Chinese documentation
 ├── logstash/
-│   └── es-migration-batch.conf                   # Logstash template
-│   └── logstash-7.10.2/                          # Logstash runtime
+│   ├── es-migration-batch.conf        # Logstash template
+│   └── logstash-7.10.2/               # Logstash runtime
 └── logs/
-    ├── migration.log                             # Migration logs
-    └── .snapshot_migration_progress              # Progress tracking
+    ├── migration.log                  # Migration logs
+    └── .snapshot_migration_progress   # Progress tracking
 ```
 
 ## Contributing
